@@ -76,7 +76,7 @@ TEST_CASE( "Test dataset creation", "[HDF5basics]" )
 	    (readSizes.nz == dataSizes.nz)) );
 }
 
-TEST_CASE( "Test attribute creation", "[HDF5basics]" )
+TEST_CASE( "Test attribute creation", "[HDF5attributes]" )
 {
   Hdf5File file;
   createTestFile(file);
@@ -110,3 +110,96 @@ TEST_CASE( "Test attribute creation", "[HDF5basics]" )
   CHECK_THAT(readValue, Catch::Equals(attributeValue));
 }
 
+TEST_CASE( "Test group attribute creation", "[HDF5attributes]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string attributeName = "attrib";
+  std::string attributeValue = "contents";
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kFloat;
+  hid_t groupId = file.createGroup(root, groupName);
+
+  file.writeStringAttribute(root, groupName, attributeName, attributeValue);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+  std::string readValue = file.readStringAttribute(root, groupName, attributeName);
+  file.close();
+
+  CHECK_THAT(readValue, Catch::Equals(attributeValue));
+}
+
+TEST_CASE( "Test uint64 attribute creation", "[HDF5attributes]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string datasetName = "data";
+  std::string attributeName = "uint64_attrib";
+  uint64_t attributeValue = 7357ULL;
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kFloat;
+  hid_t groupId = file.createGroup(root, groupName);
+  hid_t datasetId = file.createDataset(groupId, datasetName, dataSizes, dataSizes, dataType, 0);
+  file.writeAttribute(groupId, datasetName, attributeName, attributeValue);
+  file.closeDataset(datasetId);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    groupId = file.openGroup(root, groupName);
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+  uint64_t readValue = file.readAttribute<uint64_t>(groupId, datasetName, attributeName);
+  file.closeGroup(groupId);  
+  file.close();
+
+  REQUIRE(readValue == attributeValue);
+}
+
+TEST_CASE( "Test uint64 group attribute creation", "[HDF5attributes]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string attributeName = "uint64_attrib";
+  uint64_t attributeValue = 73571ULL;
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kFloat;
+  hid_t groupId = file.createGroup(root, groupName);
+
+  file.writeAttribute(root, groupName, attributeName, attributeValue);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+  uint64_t readValue = file.readAttribute<uint64_t>(root, groupName, attributeName);
+  file.close();
+
+  REQUIRE(readValue == attributeValue);
+}
