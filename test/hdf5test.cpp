@@ -203,3 +203,67 @@ TEST_CASE( "Test uint64 group attribute creation", "[HDF5attributes]" )
 
   REQUIRE(readValue == attributeValue);
 }
+
+TEST_CASE( "Test float attribute creation", "[HDF5attributes]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string datasetName = "data";
+  std::string attributeName = "float_attrib";
+  float attributeValue = 7357.5f;
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kFloat;
+  hid_t groupId = file.createGroup(root, groupName);
+  hid_t datasetId = file.createDataset(groupId, datasetName, dataSizes, dataSizes, dataType, 0);
+  file.writeAttribute(groupId, datasetName, attributeName, attributeValue);
+  file.closeDataset(datasetId);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    groupId = file.openGroup(root, groupName);
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+  float readValue = file.readAttribute<float>(groupId, datasetName, attributeName);
+  file.closeGroup(groupId);  
+  file.close();
+
+  REQUIRE(readValue == attributeValue); // Will be exact for the given float value
+}
+
+TEST_CASE( "Test float group attribute creation", "[HDF5attributes]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string attributeName = "float_attrib";
+  float attributeValue = 7357.125f;
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kFloat;
+  hid_t groupId = file.createGroup(root, groupName);
+
+  file.writeAttribute(root, groupName, attributeName, attributeValue);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+  float readValue = file.readAttribute<float>(root, groupName, attributeName);
+  file.close();
+
+  REQUIRE(readValue == attributeValue); // Will be exact for the given float value
+}
