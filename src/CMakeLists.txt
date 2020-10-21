@@ -21,6 +21,9 @@ set_target_properties(hdf5lib PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/.
 add_library(h5hllib SHARED IMPORTED)
 set_target_properties(h5hllib PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../hdf5-1.10.7-macOS-10.14-x86_64-clang10.0.1/lib/libhdf5_hl.dylib)
 
+# Testing
+enable_testing()
+
 # Create the test executable
 add_executable(hdf5_test ../test/hdf5test.cpp Hdf5File.cpp)
 # Add include directories
@@ -29,6 +32,4 @@ target_include_directories(hdf5_test PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(hdf5_test PRIVATE hdf5lib)
 target_link_libraries(hdf5_test PRIVATE h5hllib)
 target_link_libraries(hdf5_test PRIVATE Catch2::Catch2)
-# Testing
-enable_testing()
 add_test(NAME hdf5_test COMMAND hdf5_test)
