@@ -1,6 +1,9 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include <catch2/catch.hpp>
 
+#include <vector>
+#include <functional>
+
 #include "Hdf5File.h"
 
 const std::string testFileName = "test.hdf5";
@@ -266,4 +269,72 @@ TEST_CASE( "Test float group attribute creation", "[HDF5attributes]" )
   file.close();
 
   REQUIRE(readValue == attributeValue); // Will be exact for the given float value
+}
+
+TEST_CASE( "Test float array attribute creation", "[HDF5attributes]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string datasetName = "data";
+  std::string attributeName = "float_array_attrib";
+  std::vector<float> attributeValues = {7357.5f, 73576.0f, 57.4765625f};
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kFloat;
+  hid_t groupId = file.createGroup(root, groupName);
+  hid_t datasetId = file.createDataset(groupId, datasetName, dataSizes, dataSizes, dataType, 0);
+  file.writeAttribute(groupId, datasetName, attributeName, attributeValues);
+  file.closeDataset(datasetId);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    groupId = file.openGroup(root, groupName);
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+  std::vector<float> readValues = file.readAttribute<std::vector<float>>(groupId, datasetName, attributeName);
+  file.closeGroup(groupId);  
+  file.close();
+
+  REQUIRE(readValues == attributeValues); // Will be exact for the given float values
+}
+
+TEST_CASE( "Test uint64_t array attribute creation", "[HDF5attributes]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string datasetName = "data";
+  std::string attributeName = "float_array_attrib";
+  std::vector<uint64_t> attributeValues = {73575, 735760, 5747656250};
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kFloat;
+  hid_t groupId = file.createGroup(root, groupName);
+  hid_t datasetId = file.createDataset(groupId, datasetName, dataSizes, dataSizes, dataType, 0);
+  file.writeAttribute(groupId, datasetName, attributeName, attributeValues);
+  file.closeDataset(datasetId);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    groupId = file.openGroup(root, groupName);
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+  std::vector<uint64_t> readValues = file.readAttribute<std::vector<uint64_t>>(groupId, datasetName, attributeName);
+  file.closeGroup(groupId);  
+  file.close();
+
+  REQUIRE(readValues == attributeValues); // Will be exact for the given float values
 }
