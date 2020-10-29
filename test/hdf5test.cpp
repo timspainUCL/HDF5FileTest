@@ -70,6 +70,12 @@ TEST_CASE( "Test dataset creation", "[HDF5basics]" )
     REQUIRE(false);
   }
   DimensionSizes readSizes = file.getDatasetDimensionSizes(groupId, datasetName);
+  hid_t typeInFile = H5Tget_native_type(H5Dget_type(datasetId), H5T_DIR_DESCEND);
+  hid_t typeWanted = H5T_NATIVE_FLOAT;
+
+  REQUIRE( H5Tequal(typeInFile, typeWanted) );
+  H5Tclose(typeInFile);
+
   file.closeDataset(datasetId);
   file.closeGroup(groupId);
   file.close();
@@ -337,4 +343,45 @@ TEST_CASE( "Test uint64_t array attribute creation", "[HDF5attributes]" )
   file.close();
 
   REQUIRE(readValues == attributeValues); // Will be exact for the given float values
+}
+
+TEST_CASE( "Test uint16 dataset creation", "[HDF5basics]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string datasetName = "data";
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kUint16;
+  hid_t groupId = file.createGroup(root, groupName);
+  hid_t datasetId = file.createDataset(groupId, datasetName, dataSizes, dataSizes, dataType, 0);
+  file.closeDataset(datasetId);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    groupId = file.openGroup(root, groupName);
+    datasetId = file.openDataset(groupId, datasetName);
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+  DimensionSizes readSizes = file.getDatasetDimensionSizes(groupId, datasetName);
+  hid_t typeInFile = H5Tget_native_type(H5Dget_type(datasetId), H5T_DIR_DESCEND);
+  hid_t typeWanted = H5T_NATIVE_USHORT;
+
+  REQUIRE( H5Tequal(typeInFile, typeWanted) );
+  H5Tclose(typeInFile);
+  
+  file.closeDataset(datasetId);
+  file.closeGroup(groupId);
+  file.close();
+
+  REQUIRE( ((readSizes.nx == dataSizes.nx) &&
+	    (readSizes.ny == dataSizes.ny) &&
+	    (readSizes.nz == dataSizes.nz)) );
 }
