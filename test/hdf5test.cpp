@@ -385,3 +385,49 @@ TEST_CASE( "Test uint16 dataset creation", "[HDF5basics]" )
 	    (readSizes.ny == dataSizes.ny) &&
 	    (readSizes.nz == dataSizes.nz)) );
 }
+
+TEST_CASE( "Test uint16 dataset r/w", "[HDF5basics]" )
+{
+  Hdf5File file;
+  createTestFile(file);
+  hid_t root = file.getRootGroup();
+  std::string groupName = "group";
+  std::string datasetName = "data";
+  const int dimLength = 100;
+  DimensionSizes dataSizes(dimLength, dimLength, dimLength);
+  Hdf5File::MatrixDataType dataType = Hdf5File::MatrixDataType::kUint16;
+  hid_t groupId = file.createGroup(root, groupName);
+  hid_t datasetId = file.createDataset(groupId, datasetName, dataSizes, dataSizes, dataType, 0);
+
+  // Write the complete block of data
+  DimensionSizes start(0, 0, 0);
+  uint16_t data[dimLength*dimLength*dimLength];
+  data[0] = 7357;
+  data[1] = 7537;
+  data[dimLength] = 42;
+  file.writeHyperSlab(datasetId, start, dataSizes, data);
+  file.closeDataset(datasetId);
+  file.closeGroup(groupId);
+  file.close();
+
+  file.open(testFileName);
+  try{
+    root = file.getRootGroup();
+    groupId = file.openGroup(root, groupName);
+    //    datasetId = file.openDataset(groupId, datasetName);
+    REQUIRE(true);
+  } catch(...) {
+    REQUIRE(false);
+  }
+
+  uint16_t fileData[dimLength*dimLength*dimLength];
+  file.readCompleteDataset(groupId, datasetName, dataSizes, fileData);
+  REQUIRE(data[0] == fileData[0]);
+  REQUIRE(data[1] == fileData[1]);
+  REQUIRE(data[dimLength] == fileData[dimLength]);
+  
+  //file.closeDataset(datasetId);
+  file.closeGroup(groupId);
+  file.close();
+
+}
